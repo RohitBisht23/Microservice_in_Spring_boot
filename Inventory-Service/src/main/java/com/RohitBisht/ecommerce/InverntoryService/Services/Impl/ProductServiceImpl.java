@@ -1,5 +1,7 @@
 package com.RohitBisht.ecommerce.InverntoryService.Services.Impl;
 
+import com.RohitBisht.ecommerce.InverntoryService.DTO.OrderRequestDTO;
+import com.RohitBisht.ecommerce.InverntoryService.DTO.OrderRequestItemDTO;
 import com.RohitBisht.ecommerce.InverntoryService.DTO.ProductDTO;
 import com.RohitBisht.ecommerce.InverntoryService.Entity.Product;
 import com.RohitBisht.ecommerce.InverntoryService.Repository.ProductRepository;
@@ -8,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -39,5 +42,40 @@ public class ProductServiceImpl implements ProductServices {
 
         log.info("Product successfully found");
         return mapper.map(product, ProductDTO.class);
+    }
+
+    @Override
+    @Transactional
+    public Double placeOrderAndReturnTotalPrice(OrderRequestDTO Orders) {
+        log.info("Reducing the stocks");
+
+        double totalPrice = 0.0;
+
+        for(OrderRequestItemDTO orders : Orders.getItems()) {
+            log.info("Getting product id and product quantity from the list of orders one by one");
+            Long productId = orders.getProductId();
+            Integer quantity = orders.getQuantity();
+
+            log.info("Check if stocks are present in inventory with this give product id :{}", productId);
+
+            Product product = productRepository.findById(productId).orElseThrow(()-> new RuntimeException("No product found with give product id :"+productId));
+            if(product.getStock() < quantity) {
+                log.info("Quantity is very high than our inventory, we cannot fulfill the quantity.");
+                throw new RuntimeException("Order quantity is higher than our inventory, Sorry we cannot fulfill the quantity.");
+            }
+
+            log.info("Reduce the quantity");
+            product.setStock(product.getStock()-quantity);
+            productRepository.save(product);
+
+            log.info("Fetching One product price");
+            Double oneProductPrice = product.getPrice();
+
+            log.info("Calculating total price");
+            totalPrice = totalPrice + (oneProductPrice * quantity);
+
+            log.info("Reducing the stocks as well");
+        }
+        return totalPrice;
     }
 }

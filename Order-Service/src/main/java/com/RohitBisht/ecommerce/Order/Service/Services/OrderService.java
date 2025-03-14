@@ -9,4 +9,6 @@ public interface OrderService {
     OrderRequestDTO getProductById(Long orderId);
 
     List<OrderRequestDTO> getAllOrder();
+
+    OrderRequestDTO createOrder(OrderRequestDTO orderRequestDTO);
 }

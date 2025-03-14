@@ -1,4 +1,4 @@
-INSERT INTO product (title, price, stock) VALUES
+INSERT INTO Product (title, price, stock) VALUES
 ('Laptop', 799.99, 50),
 ('Smartphone', 499.99, 150),
 ('Tablet', 299.99, 30),
