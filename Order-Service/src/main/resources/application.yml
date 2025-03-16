@@ -1,3 +1,18 @@
+#Enabling actuator
+management:
+  health:
+    circuitBreaker:
+      enabled: true
+
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+
+
 resilience4j:
   retry:
     instances:
@@ -11,3 +26,15 @@ resilience4j:
         timeRefreshPeriod : 5s
         limitForPeriod: 1
         limitOutDuration : 1s
+
+  circuitBreaker:
+    instances:
+      inventoryCircuitBreaker:
+        registerHealthIndicator: true          #Explore circuit breaker health via actuator
+        slidingWindowSize : 10                 #size of the sliding window for call recording
+        slidingWindowType : count_based        # use count-based sliding window
+        minimumNumberOfCalls : 10                #Minimum number of calls before calculating the failure rate
+        failureRateThreshold : 50                #if 50% (5 out of 10) calls fails, circuit goes to OPEN STATE
+        waitDurationInOpenState : 20s            #Time to circuit to open before go into half open state
+        permittedNumberOfCallsInHalfOpenState: 3 #Number of test calls in the HALF_OPEN_STATE
+        eventConsumerBufferSize: 10              #Buffer size for event logs
