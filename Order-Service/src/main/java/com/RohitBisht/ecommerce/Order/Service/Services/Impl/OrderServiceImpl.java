@@ -8,10 +8,13 @@ import com.RohitBisht.ecommerce.Order.Service.Entity.OrderItems;
 import com.RohitBisht.ecommerce.Order.Service.Entity.OrderStatus;
 import com.RohitBisht.ecommerce.Order.Service.Repository.OrderRepository;
 import com.RohitBisht.ecommerce.Order.Service.Services.OrderService;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
+import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -43,6 +46,8 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Retry(name = "inventoryRetry", fallbackMethod = "createOrderFallBack")
+    @RateLimiter(name ="inventoryRateLimiter", fallbackMethod = "createOrderFallBack")
     public OrderRequestDTO createOrder(OrderRequestDTO orderRequestDTO) {
         log.info("Calculating order price");
         Double TotalPrice = inventoryFeignClient.reduceStocks(orderRequestDTO);
@@ -59,5 +64,25 @@ public class OrderServiceImpl implements OrderService {
         Order savedOrder = repository.save(order);
 
         return modelMapper.map(savedOrder, OrderRequestDTO.class);
+    }
+
+    @Override
+    public String cancelOrder(Long orderId) {
+        log.info("Checking if given order id exist or not with id : {}",orderId);
+        Order order = repository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order with  does not exists"+orderId));
+
+        log.info("Order exists with given order id, now cancelling order");
+        OrderRequestDTO orderRequestDTO = modelMapper.map(order, OrderRequestDTO.class);
+        String orderAddedSuccessfully = inventoryFeignClient.addStocks(orderRequestDTO);
+
+        return "Order have been successfully added";
+    }
+
+
+    //FallBack method
+    public OrderRequestDTO createOrderFallBack(OrderRequestDTO orderRequestDTO, Throwable throwable) {
+        log.error("Fall-Back error : {}",throwable.getMessage());
+        return new OrderRequestDTO();
     }
 }

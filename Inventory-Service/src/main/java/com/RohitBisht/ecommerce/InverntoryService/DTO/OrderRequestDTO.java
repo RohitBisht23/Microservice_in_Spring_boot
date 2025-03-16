@@ -6,5 +6,5 @@ import java.util.List;
 
 @Data
 public class OrderRequestDTO {
-    private final List<OrderRequestItemDTO> items;
+    private  List<OrderRequestItemDTO> items;
 }

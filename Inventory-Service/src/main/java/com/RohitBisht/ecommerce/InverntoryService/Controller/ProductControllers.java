@@ -52,6 +52,10 @@ public class ProductControllers {
     @PutMapping("/reduceStock")
     public ResponseEntity<Double> reduceStocks(@RequestBody OrderRequestDTO orders) {
         return ResponseEntity.ok(productServices.placeOrderAndReturnTotalPrice(orders));
+    }
 
+    @PutMapping("/addStocks")
+    public ResponseEntity<String> addStock(@RequestBody OrderRequestDTO orders) {
+        return ResponseEntity.ok(productServices.addStocks(orders));
     }
 }

@@ -13,4 +13,6 @@ public interface ProductServices {
     public ProductDTO getProductById(Long productId);
 
     Double placeOrderAndReturnTotalPrice(OrderRequestDTO orders);
+
+    String addStocks(OrderRequestDTO orders);
 }

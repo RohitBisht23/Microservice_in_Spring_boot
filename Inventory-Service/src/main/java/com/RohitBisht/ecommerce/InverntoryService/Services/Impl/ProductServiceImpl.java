@@ -60,6 +60,7 @@ public class ProductServiceImpl implements ProductServices {
 
             Product product = productRepository.findById(productId).orElseThrow(()-> new RuntimeException("No product found with give product id :"+productId));
             if(product.getStock() < quantity) {
+                log.info("Product quantity : {} and stock :{}", quantity, product.getStock());
                 log.info("Quantity is very high than our inventory, we cannot fulfill the quantity.");
                 throw new RuntimeException("Order quantity is higher than our inventory, Sorry we cannot fulfill the quantity.");
             }
@@ -77,5 +78,29 @@ public class ProductServiceImpl implements ProductServices {
             log.info("Reducing the stocks as well");
         }
         return totalPrice;
+    }
+
+    @Override
+    @Transactional
+    public String addStocks(OrderRequestDTO orders) {
+        log.info("Adding stocks");
+        for(OrderRequestItemDTO items : orders.getItems()) {
+            log.info("Fetch product id from the order items");
+            Long productId = items.getProductId();
+
+            log.info("Check if the product with given product id exist or not :{}",productId);
+            Product product = productRepository.findById(productId)
+                    .orElseThrow(() -> new RuntimeException("Product not found with given id :{}"+productId));
+
+            Integer quantity = items.getQuantity();
+
+            log.info("Add the quantity to the product id");
+            Integer finalQuantity = product.getStock() + quantity;
+
+            log.info("Save the final quantity to the inventory");
+            product.setStock(finalQuantity);
+            productRepository.save(product);
+        }
+        return "Product is successfully added to the inventory. Thank you";
     }
 }
